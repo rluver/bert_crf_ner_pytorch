@@ -149,15 +149,15 @@ class NERDataModule(pl.LightningDataModule):
     
 
 
-def main(EPOCHS, BATCH_SIZE, ):
+def main(EPOCHS, BATCH_SIZE, MAX_LEN):
     
     tokenizer = BertTokenizer('vocab.korean.rawtext.list')
     dataset = load_data('corpus_korean')
     
     num_cores = os.cpu_count() - 2
     
-    splitted_dataset = np.array_split(dataset[:10000], num_cores)    
-    temp_input_dataframe = parmap.map(get_input_data, splitted_dataset, tokenizer, pm_pbar = True, pm_processes = num_cores)
+    splitted_dataset = np.array_split(dataset, num_cores)    
+    temp_input_dataframe = parmap.map(get_input_data, splitted_dataset, tokenizer, MAX_LEN, pm_pbar = True, pm_processes = num_cores)
     input_dataframe = pd.DataFrame()
     for dataframe in temp_input_dataframe:
         input_dataframe = input_datafame.append(dataframe)
@@ -180,7 +180,7 @@ def main(EPOCHS, BATCH_SIZE, ):
         
     input_dataframe.tags = input_dataframe.tags.progress_apply(lambda x: ['[CLS]'] + x + ['[SEP]'])
     input_dataframe.tags = input_dataframe.tags.progress_apply(lambda x: [tags_to_ids[i] for i in x])
-    input_dataframe.tags = input_dataframe.tags.progress_apply(lambda x: pad_sequences([x], max_len = 256, padding = 'post', value = tags_to_ids['[PAD]'][0]))
+    input_dataframe.tags = input_dataframe.tags.progress_apply(lambda x: pad_sequences([x], max_len = MAX_LEN, padding = 'post', value = tags_to_ids['[PAD]'][0]))
     
     train, test = train_test_split(input_dataframe, test_size = 0.2)
 
@@ -221,7 +221,8 @@ def main(EPOCHS, BATCH_SIZE, ):
 
 if __name__ == '__main__':
             
-    EPOCHS = 1
+    EPOCHS = 10
     BATCH_SIZE = 128
+    MAX_LEN = 256
     
-    main(EPOCHS, BATCH_SIZE)
+    main(EPOCHS, BATCH_SIZE, MAX_LEN)
