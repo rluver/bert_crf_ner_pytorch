@@ -144,10 +144,10 @@ def get_bert_input_token(text, tokenizer, max_len = 256):
 
 def get_entity(text, ner_model, tokenizer):
         
-    input_data = get_bert_input_token(text)
+    input_data = get_bert_input_token(text, tokenizer)
     predicted_ner = ner_model(**input_data)
     
-    text_token = input_data['input_ids'][0][input_data > 0][1:-1]
+    text_token = input_data['input_ids'][0][input_data['input_ids'][0] > 0][1:-1]
     label_tokens = predicted_ner[0][1:-1].cpu()
     
     label = list([IDS_TO_TAGS[label_token.item()] for label_token in label_tokens])
