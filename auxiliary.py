@@ -64,7 +64,7 @@ def load_data(file_path, sep = '\t'):
 
 
 
-def get_input_data(dataset, tokenizer):
+def get_input_data(dataset, tokenizer, MAX_LEN):
     
     input_dataframe = pd.DataFrame(columns = ['text', 'tags'])
     
@@ -81,16 +81,20 @@ def get_input_data(dataset, tokenizer):
         
         character_dataframe = pd.DataFrame([j for i in sentence for j in i], columns = ['text'])
         
-        for key in name_entity.keys():
-            no_space_key = key.replace(' ', '')
-            for find in re.finditer(no_space_key, ''.join(sentence)):                
-                index = find.span()
-                if ( index[1] - index[0] ) == 1:
-                    character_dataframe.loc[index[0], 'tag'] = 'B-' + name_entity[key]
-                else:
-                    character_dataframe.loc[index[0], 'tag'] = 'B-' + name_entity[key]
-                    character_dataframe.loc[( index[0] + 1 ) : (index[1] - 1 ), 'tag'] = 'I-' + name_entity[key]
-            
+        try:
+            for key in name_entity.keys():
+                no_space_key = key.replace(' ', '')
+                for find in re.finditer(no_space_key, ''.join(sentence)):                
+                    index = find.span()
+                    if ( index[1] - index[0] ) == 1:
+                        character_dataframe.loc[index[0], 'tag'] = 'B-' + name_entity[key]
+                    else:
+                        character_dataframe.loc[index[0], 'tag'] = 'B-' + name_entity[key]
+                        character_dataframe.loc[( index[0] + 1 ) : (index[1] - 1 ), 'tag'] = 'I-' + name_entity[key]
+        
+        except:
+            continue
+        
         character_dataframe.fillna('O', inplace = True)
         
         start = 0
@@ -108,7 +112,7 @@ def get_input_data(dataset, tokenizer):
         
         input_dataframe = input_dataframe.append(pd.DataFrame([[sentence, bert_tag]], columns = ['text', 'tags']))
         
-        input_dataframe = input_dataframe[input_dataframe.text.map(len) <= 98]
+        input_dataframe = input_dataframe[input_dataframe.text.map(len) <= ( MAX_LEN - 2 )]
         input_dataframe = input_dataframe[input_dataframe.text.apply(lambda x: max([len(i) for i in x]))  <= 18]
         input_dataframe.reset_index(drop = True, inplace = True)
         
