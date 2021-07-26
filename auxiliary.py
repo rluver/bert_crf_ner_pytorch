@@ -200,7 +200,6 @@ def get_entity(text, ner_model, tokenizer):
         if idx == 0 and value.startswith('B'):
             start_idx = previous_index
             end_idx = index
-            print(start_idx, end_idx)
         
         if last_entity.startswith('B') and value.startswith('B'):
             end_idx = index
@@ -209,24 +208,19 @@ def get_entity(text, ner_model, tokenizer):
             
             start_idx = previous_index
             end_idx = index
-            print(start_idx, end_idx)
                     
         if last_entity.startswith('O') and value.startswith('B'):
             start_idx = previous_index
             end_idx = index
-            print(start_idx, end_idx)
             
         if last_entity.startswith('B') and value.startswith('I'):
             end_idx += key_len
-            print(start_idx, end_idx)
             
         if last_entity.startswith('I') and value.startswith('I'):
             end_idx += key_len
-            print(start_idx, end_idx)    
             
         if last_entity.startswith('I') and value.startswith('O'):
             end_idx += key_len
-            print(start_idx, end_idx)
             word = text[start_idx: end_idx]
             ner_dataframe = ner_dataframe.append(pd.DataFrame({'word': word, 'entity': last_entity[2:]}, index = [0]))
     
