@@ -9,6 +9,7 @@ import torch
 import torch.nn as nn
 import pytorch_lightning as pl
 from sklearn.metrics import f1_score
+from torchcrf import CRF
 from transformers import BertConfig, BertForTokenClassification
 from transformers.optimization import AdamW, get_linear_schedule_with_warmup
 
@@ -17,7 +18,7 @@ from transformers.optimization import AdamW, get_linear_schedule_with_warmup
 
 class bert_crf_ner(pl.LightningModule):
     
-    def __init__(self, train_samples, batch_size, epochs, num_labels):
+    def __init__(self, train_samples = int(2e5), batch_size = 128, epochs = 10, num_labels = 306):
         super().__init__()
     
         self.train_samples = train_samples
@@ -56,7 +57,10 @@ class bert_crf_ner(pl.LightningModule):
             return log_likelihood, sequence_of_tags
         
         else:
-            sequence_of_tags = torch.tensor(self.crf.decode(linear_layer, mask = attention_mask.bool())).cuda()
+            if torch.cuda.is_available():
+                sequence_of_tags = torch.tensor(self.crf.decode(linear_layer, mask = attention_mask.bool())).cuda()
+            else:
+                sequence_of_tags = torch.tensor(self.crf.decode(linear_layer, mask = attention_mask.bool())).cpu()
             
             return sequence_of_tags
 
