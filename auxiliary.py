@@ -160,6 +160,7 @@ def get_entity(text, ner_model, tokenizer):
         if idx >= len(entity_list) - 1:
             break
         
+        # remove impossible cases
         if entity_list[idx][1].startswith('O') and entity_list[idx + 1][1].startswith('I'):
             entity_list[idx + 1][1] = 'O'
 
@@ -168,8 +169,6 @@ def get_entity(text, ner_model, tokenizer):
     
     last_entity = entity_list[0][0]
     index = 0
-    start_idx = 0
-    end_idx = 0
     
 
     for idx, temp_dict in enumerate(entity_list):
@@ -179,10 +178,13 @@ def get_entity(text, ner_model, tokenizer):
             last_entity = entity_list[( idx - 1 )][-1]
         
         key_len = len(key)
-        
-        
+                
         if text[index: (index + 1)] == ' ':
             index += 1
+            try:
+                end_idx += 1
+            except:
+                pass
             
             if key == text[index: (index + key_len)]:
                 previous_index = index
@@ -202,9 +204,15 @@ def get_entity(text, ner_model, tokenizer):
             end_idx = index
         
         if last_entity.startswith('B') and value.startswith('B'):
-            end_idx = index
             word = text[start_idx: end_idx]
-            ner_dataframe = ner_dataframe.append(pd.DataFrame({'word': word, 'entity': value[2:]}, index = [0]))
+            ner_dataframe = ner_dataframe.append(pd.DataFrame({'word': word, 'entity': last_entity[2:]}, index = [0]))
+            
+            start_idx = previous_index
+            end_idx = index
+            
+        if last_entity.startswith('I') and value.startswith('B'):
+            word = text[start_idx: end_idx]
+            ner_dataframe = ner_dataframe.append(pd.DataFrame({'word': word, 'entity': last_entity[2:]}, index = [0]))
             
             start_idx = previous_index
             end_idx = index
@@ -220,7 +228,6 @@ def get_entity(text, ner_model, tokenizer):
             end_idx += key_len
             
         if last_entity.startswith('I') and value.startswith('O'):
-            end_idx += key_len
             word = text[start_idx: end_idx]
             ner_dataframe = ner_dataframe.append(pd.DataFrame({'word': word, 'entity': last_entity[2:]}, index = [0]))
     
